@@ -20,7 +20,7 @@
 #define ECHO_PORT          (2002)
 #define MAX_LINE           (1000)
 
-int main(int argc, char **argv[]) {
+int main(int argc, char *argv[]) {
 	int list_s; /*  listening socket          */
 	int conn_s; /*  connection socket         */
 	short int port; /*  port number               */
@@ -50,13 +50,13 @@ int main(int argc, char **argv[]) {
 
 	memset(&servaddr, 0, sizeof(servaddr));/*清空servaddr*/
 	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr = htonl(INADDR_ANY);/*把本机字节顺序转化为网络字节顺序*/
+	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);/*把本机字节顺序转化为网络字节顺序*/
 	servaddr.sin_port = htons(port);/*将主机字节顺序转换为网络字节顺序*/
 
 	/**
 	 * 绑定端口
 	 */
-	if (bind(list_s, (struct sockaddr_in *) servaddr, sizeof(servaddr)) < 0) {
+	if (bind(list_s, (struct sockaddr_in *) &servaddr, sizeof(servaddr)) < 0) {
 		fprintf(stderr, "NoahServer: Error calling bind()\n");
 		exit(EXIT_FAILURE);
 	}
