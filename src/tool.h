@@ -11,9 +11,30 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netdb.h>
+
+/*一些恒定的参数*/
+#define	MAXLINE	 8192  /* max text line length */
+#define MAXBUF   8192  /* max I/O buffer size */
 #define LISTENQ        (1024)   /*  Backlog for listen()   */
+#define RIO_BUFSIZE 8192
 
 ssize_t Readline(int fd, void *vptr, size_t maxlen);
 ssize_t Writeline(int fc, const void *vptr, size_t maxlen);
+
+int open_clientfd(char *hostname, int portno);
+int open_listenfd(int portno);
+
+int Open_clientfd(char *hostname, int port);
+int Open_listenfd(int port);
+
+/*接收客户端发来的请求*/
+int Accept(int s, struct sockaddr *addr, socklen_t *addrlen);
+
+typedef struct{
+	int rio_fd;
+	int rio_cnt;
+	int *rio_bufptr;
+	int rio_buf[RIO_BUFSIZE];
+} rio_t;
 
 #endif /* TOOL_H_ */
