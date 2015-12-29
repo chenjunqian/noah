@@ -172,7 +172,7 @@ int Accept(int s, struct sockaddr *addr, socklen_t *addrlen) {
 /**
  * 对Unix系统中 read()函数的封装，是一个带有缓冲区的read()版本，
  * 当调用rio_read要求读n个字节时，读缓冲区内有
- * rp->rio_cnt个未读的自己，如果缓冲区为空，会通过read函数再填满它。
+ * rp->rio_cnt个未读的字节，如果缓冲区为空，会通过read函数再填满它。
  * 这个read电泳收到一个不足值并不是错误，只不过读缓冲区填充了一部分，
  * 一旦缓冲区非空，rio_read就充缓冲区拷贝n和rp->cnt中较小的自己到用户缓冲区，
  * 并返回拷贝字节数.
@@ -180,7 +180,7 @@ int Accept(int s, struct sockaddr *addr, socklen_t *addrlen) {
 static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n) {
 	int cnt;
 
-	while (rp->rio_cnt <= 0) { /* refill if buf is empty */
+	while (rp->rio_cnt <= 0) { /*如果为空，就填满*/
 		rp->rio_cnt = read(rp->rio_fd, rp->rio_buf, sizeof(rp->rio_buf));
 		if (rp->rio_cnt < 0) {
 			if (errno != EINTR) /* interrupted by sig handler return */
@@ -191,7 +191,7 @@ static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n) {
 			rp->rio_bufptr = rp->rio_buf; /* reset buffer ptr */
 	}
 
-	/* Copy min(n, rp->rio_cnt) bytes from internal buf to user buf */
+	/*缓冲区为非空，将n和rp->cnt拷贝到用户缓冲区*/
 	cnt = n;
 	if (rp->rio_cnt < n)
 		cnt = rp->rio_cnt;
@@ -201,14 +201,51 @@ static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n) {
 	return cnt;
 }
 
+/**
+ * 每次调用都从缓冲区读取一个字节，然后判断这个字节是否是结尾的换行符
+ */
 ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen) {
 	int n, rc;
 	char c, *bufp = usrbuf;
 
 	for (n = 1; n < maxlen; n++) {
 		if ((rc = rio_read(rp, &c, 1)) == 1) {
-
+			*bufp++ = c;
+			if (c == '\n') {
+				break;
+			}
+		} else if (rc == 0) {
+			if (n == 1) {
+				return 0; //EOF，没有读取任何数据
+			} else {
+				break; //EOF,读取了一些数据了
+			}
+		} else {
+			return -1; //error
 		}
 	}
+
+	*bufp = 0;
+	return n;
+}
+
+/**
+ * 关联文件描述符，并重置缓冲区
+ */
+void rio_readinitb(rio_t *rp, int fd) {
+	rp->rio_fd = fd;
+	rp->rio_cnt = 0;
+	rp->rio_bufptr = rp->rio_buf;
+}
+
+/**
+ * 对rio_readlineb的封装，增添错误提示符
+ */
+ssize_t Rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen) {
+	ssize_t rc;
+
+	if ((rc = rio_readlineb(rp, usrbuf, maxlen)) < 0)
+		unix_error("Rio_readlineb error");
+	return rc;
 }
 

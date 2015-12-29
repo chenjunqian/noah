@@ -30,11 +30,13 @@ int Open_listenfd(int port);
 /*接收客户端发来的请求*/
 int Accept(int s, struct sockaddr *addr, socklen_t *addrlen);
 
+void rio_readinitb(rio_t *rp, int fd);
+
 typedef struct{
-	int rio_fd;
-	int rio_cnt;
+	int rio_fd;//缓冲区的描述符
+	int rio_cnt;//未读字节的缓冲区
 	int *rio_bufptr;
-	int rio_buf[RIO_BUFSIZE];
+	int rio_buf[RIO_BUFSIZE];//内部缓冲区
 } rio_t;
 
 #endif /* TOOL_H_ */

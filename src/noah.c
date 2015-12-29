@@ -41,7 +41,23 @@ int main(int argc, char *argv[]) {
 	}
 }
 
-int dealRequest(int fd){
+/**
+ * 处理HTTP事务
+ * 读取和解析请求，目前只能支持GET请求，其他请求一律返回错误信息
+ */
+void dealRequest(int fd){
+	int is_static;
+	struct stat sbuf;
+	char buf[MAXLINE],method[MAXLINE],uri[MAXLINE],version[MAXLINE];
+	char filename[MAXLINE],cgiargs[MAXLINE];
+	rio_t rio;
+
+	Rio_readinitb(&rio,fd);
+	Rio_readlineb(&rio,buf,MAXLINE);
+	scanf(buf,"%s %s %s",method,uri,version);
+	if (strcasecmp(method,"GET")) {
+
+	}
 
 }
 
