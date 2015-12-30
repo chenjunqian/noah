@@ -21,6 +21,8 @@
 #define MAX_LINE           (1000)
 
 void dealRequest(int fd);
+void clienterror(int fd, char *cause, char errnum, char *shortmsg, char *longmsg);
+void read_requesthead(rio_t *rp);
 
 int main(int argc, char *argv[]) {
 
@@ -62,6 +64,8 @@ void dealRequest(int fd) {
 		return;
 	}
 
+	read_requesthead(&rio);
+
 
 }
 
@@ -92,3 +96,16 @@ void clienterror(int fd, char *cause, char errnum, char *shortmsg, char *longmsg
     Rio_writen(fd, body, strlen(body));
 }
 
+/**
+ * 读取请求报头中得信息
+ */
+void read_requesthead(rio_t *rp){
+	char buf[MAXLINE];
+
+	Rio_readlineb(rp,buf,MAXLINE);
+	while(strcmp(buf,"\r\n")){
+		Rio_readlineb(rp,buf,MAXLINE);
+		printf("%a",buf);
+	}
+
+}
