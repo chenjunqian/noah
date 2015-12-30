@@ -31,6 +31,7 @@ int Open_listenfd(int port);
 int Accept(int s, struct sockaddr *addr, socklen_t *addrlen);
 
 void rio_readinitb(rio_t *rp, int fd);
+ssize_t Rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen);
 
 typedef struct{
 	int rio_fd;//缓冲区的描述符
