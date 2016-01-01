@@ -250,6 +250,49 @@ ssize_t Rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen) {
 }
 
 /**
+ * 将userbuf写入到fd中
+ */
+ssize_t rio_writen(int fd, void *usrbuf, size_t n) {
+	size_t nleft = n;
+	ssize_t nwritten;
+	char *bufp = usrbuf;
+
+	while (nleft > 0) {
+		if ((nwritten = write(fd, bufp, nleft)) <= 0) {
+			if (errno == EINTR) {/* interrupted by sig handler return */
+				nwritten = 0; /* and call write() again */
+			} else {
+				return -1; /* errno set by write() */
+			}
+		}
+		nleft -= nwritten;
+		bufp += nwritten;
+	}
+	return n;
+}
+
+/**
+ * 对rio_writen进行封装
+ * 将userbuf写入到fd中
+ */
+void Rio_writen(int fd, void *usrbuf, size_t n) {
+	if (rio_writen(fd, usrbuf, n) != n) {
+		unix_error("Rio_writen error");
+	}
+}
+
+/**
+ * 对 close 函数的封装
+ */
+void Close(int fd) {
+	int rc;
+
+	if ((rc = close(fd)) < 0){
+		unix_error("Close error");
+	}
+}
+
+/**
  * 对Unix open函数的封装
  */
 int Open(const char *pathname, int flags, mode_t mode) {
