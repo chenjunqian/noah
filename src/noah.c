@@ -70,7 +70,26 @@ void dealRequest(int fd) {
 	}
 
 	read_requesthead(&rio);
+	is_static = parse_uri(uri, filename, cgiargs);
+	if (stat(filename, &sbuf) < 0) {
+		clienterror(fd, "404", "Not found", "Noah Server couldn't find this file");
+	}
 
+	if (is_static) {//如果是静态文件
+		if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) {//检测是否是常规文件或者是否存在
+			clienterror(fd, filename, "403", "Forbidden",
+					"Noah Server couldn't read the file");
+			return;
+		}
+		serve_static(fd, filename, sbuf.st_size);
+	} else { /* Serve dynamic content */
+		if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) {//检测是否是常规文件或者是否可读
+			clienterror(fd, filename, "403", "Forbidden",
+					"Noah Server couldn't run the CGI program");
+			return;
+		}
+		serve_dynamic(fd, filename, cgiargs);
+	}
 }
 
 /**
@@ -191,7 +210,7 @@ void serve_dynamic(int fd, char *filename, char *cgiargs) {
 	sprintf(buf, "Server: Tiny Web Server\r\n");
 	Rio_writen(fd, buf, strlen(buf));
 
-	if (Fork() == 0) {//派生一个子进程
+	if (Fork() == 0) { //派生一个子进程
 		/*请求URI的CGI参数，初始化QUERY_STRING环境变量*/
 		setenv("QUERY_STRING", cgiargs, 1);
 		Dup2(fd, STDOUT_FILENO); /*重定向标准输出到已连接的描述符上*/
