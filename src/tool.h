@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 
 /*一些恒定的参数*/
 #define	MAXLINE	 8192  /* max text line length */
@@ -32,6 +34,10 @@ int Accept(int s, struct sockaddr *addr, socklen_t *addrlen);
 
 void rio_readinitb(rio_t *rp, int fd);
 ssize_t Rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen);
+int Open(const char *pathname, int flags, mode_t mode);
+
+void *Mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset);
+void Munmap(void *start, size_t length);
 
 typedef struct{
 	int rio_fd;//缓冲区的描述符

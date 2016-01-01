@@ -249,3 +249,31 @@ ssize_t Rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen) {
 	return rc;
 }
 
+/**
+ * 对Unix open函数的封装
+ */
+int Open(const char *pathname, int flags, mode_t mode) {
+	int rc;
+
+	if ((rc = open(pathname, flags, mode)) < 0) {
+		unix_error("Open error");
+	}
+	return rc;
+}
+
+/*对Unix 映射文件到内存的函数封装*/
+void *Mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset) {
+	void *ptr;
+
+	if ((ptr = mmap(addr, len, prot, flags, fd, offset)) == ((void *) -1)) {
+		unix_error("mmap error");
+	}
+	return (ptr);
+}
+
+void Munmap(void *start, size_t length) {
+	if (munmap(start, length) < 0) {
+		unix_error("munmap error");
+	}
+}
+

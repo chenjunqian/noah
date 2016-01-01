@@ -21,8 +21,12 @@
 #define MAX_LINE           (1000)
 
 void dealRequest(int fd);
-void clienterror(int fd, char *cause, char errnum, char *shortmsg, char *longmsg);
+void clienterror(int fd, char *cause, char errnum, char *shortmsg,
+		char *longmsg);
 void read_requesthead(rio_t *rp);
+int parse_uri(char *uri, char *filename, char *cgiargs);
+void serve_static(int fd, char *filename, int filesize);
+void get_filetype(char *filename, char *filetype);
 
 int main(int argc, char *argv[]) {
 
@@ -60,19 +64,20 @@ void dealRequest(int fd) {
 	Rio_readlineb(&rio, buf, MAXLINE);
 	scanf(buf, "%s %s %s", method, uri, version);
 	if (strcasecmp(method, "GET")) {
-		clienterror(fd,method,"501","Not implement","Noah server has no such method");
+		clienterror(fd, method, "501", "Not implement",
+				"Noah server has no such method");
 		return;
 	}
 
 	read_requesthead(&rio);
-
 
 }
 
 /**
  * 打印错误信息
  */
-void clienterror(int fd, char *cause, char errnum, char *shortmsg, char *longmsg) {
+void clienterror(int fd, char *cause, char errnum, char *shortmsg,
+		char *longmsg) {
 	char buf[MAXLINE], body[MAXBUF];
 
 	/**
@@ -87,25 +92,90 @@ void clienterror(int fd, char *cause, char errnum, char *shortmsg, char *longmsg
 	/**
 	 * 打印错误信息
 	 */
-    sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg);
-    Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "Content-type: text/html\r\n");
-    Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "Content-length: %d\r\n\r\n", (int)strlen(body));
-    Rio_writen(fd, buf, strlen(buf));
-    Rio_writen(fd, body, strlen(body));
+	sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg);
+	Rio_writen(fd, buf, strlen(buf));
+	sprintf(buf, "Content-type: text/html\r\n");
+	Rio_writen(fd, buf, strlen(buf));
+	sprintf(buf, "Content-length: %d\r\n\r\n", (int )strlen(body));
+	Rio_writen(fd, buf, strlen(buf));
+	Rio_writen(fd, body, strlen(body));
 }
 
 /**
  * 读取请求报头中得信息
  */
-void read_requesthead(rio_t *rp){
+void read_requesthead(rio_t *rp) {
 	char buf[MAXLINE];
 
-	Rio_readlineb(rp,buf,MAXLINE);
-	while(strcmp(buf,"\r\n")){
-		Rio_readlineb(rp,buf,MAXLINE);
-		printf("%a",buf);
+	Rio_readlineb(rp, buf, MAXLINE);
+	while (strcmp(buf, "\r\n")) {
+		Rio_readlineb(rp, buf, MAXLINE);
+		printf("%a", buf);
 	}
+	return;
+}
 
+/**
+ * 解析URI为一个文件名，和一个可选的cgi参数字符串
+ */
+int parse_uri(char *uri, char *filename, char *cgiargs) {
+	char *ptr;
+
+	if (!strstr(uri, "cgi-bin")) { //如果请求的是静态内容
+		strcpy(cgiargs, ""); //清楚CGI参数
+		strcpy(filename, "."); //将路径URI转换为一个Unix路径
+		strcat(filename, uri);
+		if (uri[strlen(uri) - 1] == '/') { //如果URI已"/"结尾，将默认的文件名添加在后面
+			strcat(filename, "home.html");
+		}
+		return 1;
+	} else { //如果请求的是动态内容
+		ptr = index(uri, '?'); //提取出CGI参数
+		if (ptr) {
+			strcpy(cgiargs, ptr + 1);
+			*ptr = '\0';
+		} else {
+			strcpy(cgiargs, "");
+		}
+
+		//转换为一个Unix文件名
+		strcpy(filename, ".");
+		strcat(filename, uri);
+		return 0;
+	}
+}
+
+/**
+ * 提供静态文件
+ */
+void serve_static(int fd, char *filename, int filesize) {
+	int srcfd;
+	char *srcp, filetype[MAXLINE], buf[MAXBUF];
+	get_filetype(filename, filetype);
+	sprintf(buf, "HTTP/1.0 200 OK\r\n");
+	sprintf(buf, "%sServer: Noah Web Server\r\n", buf);
+	sprintf(buf, "%sContent-length: %d\r\n", buf, filesize);
+	sprintf(buf, "%sContent-type: %s\r\n\r\n", buf, filetype);
+	Rio_writen(fd, buf, strlen(buf));
+
+	srcfd = Open(filename, O_RDONLY, 0);//打开文件filename，并获得文件描述符
+	srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);//将文件映射到虚拟内存上
+	Close(srcfd);
+	Rio_writen(fd, srcp, filesize);
+	Munmap(srcp, filesize);
+}
+
+/**
+ * 判断文件类型
+ */
+void get_filetype(char *filename, char *filetype) {
+	if (strstr(filename, ".html")) {
+		strcpy(filetype, "text/html");
+	} else if (strstr(filename, ".gif")) {
+		strcpy(filetype, "image/gif");
+	} else if (strstr(filename, ".jpg")) {
+		strcpy(filetype, "image/jpeg");
+	} else {
+		strcpy(filetype, "text/plain");
+	}
 }
