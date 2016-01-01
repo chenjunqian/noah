@@ -45,7 +45,8 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		clientlen = sizeof(clientadd);
 		connfd = Accept(listenfd, (struct sockaddr *) clientadd, clientlen);
-
+		dealRequest(listenfd);
+		Close(listenfd);
 	}
 }
 
