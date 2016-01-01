@@ -158,8 +158,8 @@ void serve_static(int fd, char *filename, int filesize) {
 	sprintf(buf, "%sContent-type: %s\r\n\r\n", buf, filetype);
 	Rio_writen(fd, buf, strlen(buf));
 
-	srcfd = Open(filename, O_RDONLY, 0);//打开文件filename，并获得文件描述符
-	srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);//将文件映射到虚拟内存上
+	srcfd = Open(filename, O_RDONLY, 0); //打开文件filename，并获得文件描述符
+	srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0); //将文件映射到虚拟内存上
 	Close(srcfd);
 	Rio_writen(fd, srcp, filesize);
 	Munmap(srcp, filesize);
@@ -178,4 +178,24 @@ void get_filetype(char *filename, char *filetype) {
 	} else {
 		strcpy(filetype, "text/plain");
 	}
+}
+
+/**
+ * 提供各种类型的动态内容
+ */
+void serve_dynamic(int fd, char *filename, char *cgiargs) {
+	char buf[MAXLINE], *emptylist[] = { NULL };
+
+	sprintf(buf, "HTTP/1.0 200 OK\r\n");
+	Rio_writen(fd, buf, strlen(buf));
+	sprintf(buf, "Server: Tiny Web Server\r\n");
+	Rio_writen(fd, buf, strlen(buf));
+
+	if (Fork() == 0) {//派生一个子进程
+		/*请求URI的CGI参数，初始化QUERY_STRING环境变量*/
+		setenv("QUERY_STRING", cgiargs, 1);
+		Dup2(fd, STDOUT_FILENO); /*重定向标准输出到已连接的描述符上*/
+		Execve(filename, emptylist, environ); /*运行CGI程序*/
+	}
+	Wait(NULL); /*父进程对子进程等待回收*/
 }

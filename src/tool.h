@@ -20,6 +20,8 @@
 #define LISTENQ        (1024)   /*  Backlog for listen()   */
 #define RIO_BUFSIZE 8192
 
+extern char **environ; /* defined by libc */
+
 ssize_t Readline(int fd, void *vptr, size_t maxlen);
 ssize_t Writeline(int fc, const void *vptr, size_t maxlen);
 
@@ -43,6 +45,10 @@ void Close(int fd);
 /*Unix memory*/
 void *Mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset);
 void Munmap(void *start, size_t length);
+
+pid_t Fork(void);
+int Dup2(int fd1, int fd2);
+pid_t Wait(int *status);
 
 typedef struct{
 	int rio_fd;//缓冲区的描述符
