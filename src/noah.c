@@ -30,24 +30,22 @@ void get_filetype(char *filename, char *filetype);
 void serve_dynamic(int fd, char *filename, char *cgiargs);
 
 int main(int argc, char *argv[]) {
-
 	int listenfd, connfd, port, clientlen;
-	struct sockaddr_in clientadd;
+	struct sockaddr_in clientaddr;
 
+	/* Check command line args */
 	if (argc != 2) {
 		fprintf(stderr, "usage: %s <port>\n", argv[0]);
 		exit(1);
 	}
+	port = atoi(argv[1]);
 
-	port = atoi(argv[1]); //把字符串转换成整数
-
-	listenfd = open_listenfd(port);
-
+	listenfd = Open_listenfd(port);
 	while (1) {
-		clientlen = sizeof(clientadd);
-		connfd = Accept(listenfd, (SA *)&clientadd,&clientlen);
-		dealRequest(listenfd);
-		Close(listenfd);
+		clientlen = sizeof(clientaddr);
+		connfd = Accept(listenfd, (SA *) &clientaddr, &clientlen);
+		dealRequest(connfd);
+		Close(connfd);
 	}
 }
 
@@ -74,18 +72,19 @@ void dealRequest(int fd) {
 	read_requesthead(&rio);
 	is_static = parse_uri(uri, filename, cgiargs);
 	if (stat(filename, &sbuf) < 0) {
-		clienterror(fd,filename, "404", "Not found", "Noah Server couldn't find this file");
+		clienterror(fd, filename, "404", "Not found",
+				"Noah Server couldn't find this file");
 	}
 
-	if (is_static) {//如果是静态文件
-		if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) {//检测是否是常规文件或者是否存在
+	if (is_static) { //如果是静态文件
+		if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) { //检测是否是常规文件或者是否存在
 			clienterror(fd, filename, "403", "Forbidden",
 					"Noah Server couldn't read the file");
 			return;
 		}
 		serve_static(fd, filename, sbuf.st_size);
 	} else { /* Serve dynamic content */
-		if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) {//检测是否是常规文件或者是否可读
+		if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) { //检测是否是常规文件或者是否可读
 			clienterror(fd, filename, "403", "Forbidden",
 					"Noah Server couldn't run the CGI program");
 			return;
