@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 
 	while (1) {
 		clientlen = sizeof(clientadd);
-		connfd = Accept(listenfd, (SA *)&clientadd, clientlen);
+		connfd = Accept(listenfd, (SA *)&clientadd,&clientlen);
 		dealRequest(listenfd);
 		Close(listenfd);
 	}
