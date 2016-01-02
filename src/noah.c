@@ -27,6 +27,7 @@ void read_requesthead(rio_t *rp);
 int parse_uri(char *uri, char *filename, char *cgiargs);
 void serve_static(int fd, char *filename, int filesize);
 void get_filetype(char *filename, char *filetype);
+void serve_dynamic(int fd, char *filename, char *cgiargs);
 
 int main(int argc, char *argv[]) {
 
@@ -44,7 +45,7 @@ int main(int argc, char *argv[]) {
 
 	while (1) {
 		clientlen = sizeof(clientadd);
-		connfd = Accept(listenfd, (struct sockaddr *) clientadd, clientlen);
+		connfd = Accept(listenfd, (SA *)&clientadd, clientlen);
 		dealRequest(listenfd);
 		Close(listenfd);
 	}
@@ -73,7 +74,7 @@ void dealRequest(int fd) {
 	read_requesthead(&rio);
 	is_static = parse_uri(uri, filename, cgiargs);
 	if (stat(filename, &sbuf) < 0) {
-		clienterror(fd, "404", "Not found", "Noah Server couldn't find this file");
+		clienterror(fd,filename, "404", "Not found", "Noah Server couldn't find this file");
 	}
 
 	if (is_static) {//如果是静态文件

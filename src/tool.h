@@ -22,6 +22,15 @@
 
 extern char **environ; /* defined by libc */
 
+/*definde struct*/
+typedef struct sockaddr SA;
+typedef struct{
+	int rio_fd;//缓冲区的描述符
+	int rio_cnt;//未读字节的缓冲区
+	int *rio_bufptr;
+	int rio_buf[RIO_BUFSIZE];//内部缓冲区
+} rio_t;
+
 ssize_t Readline(int fd, void *vptr, size_t maxlen);
 ssize_t Writeline(int fc, const void *vptr, size_t maxlen);
 
@@ -50,11 +59,5 @@ pid_t Fork(void);
 int Dup2(int fd1, int fd2);
 pid_t Wait(int *status);
 
-typedef struct{
-	int rio_fd;//缓冲区的描述符
-	int rio_cnt;//未读字节的缓冲区
-	int *rio_bufptr;
-	int rio_buf[RIO_BUFSIZE];//内部缓冲区
-} rio_t;
 
 #endif /* TOOL_H_ */
