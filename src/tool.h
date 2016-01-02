@@ -59,7 +59,9 @@ int Accept(int s, struct sockaddr *addr, socklen_t *addrlen);
 
 /*Unix I/O*/
 void rio_readinitb(rio_t *rp, int fd);
+ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen);
 ssize_t Rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen);
+
 ssize_t rio_writen(int fd, void *usrbuf, size_t n);
 void Rio_writen(int fd, void *usrbuf, size_t n);
 
