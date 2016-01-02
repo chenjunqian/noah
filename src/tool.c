@@ -79,7 +79,7 @@ int open_clientfd(char *hostname, int port) {
 		return -1;
 	}
 
-	if ((hp = gethostname(hostname)) == NULL) {
+	if ((hp = gethostname(hostname,sizeof(hostname))) == NULL) {
 		return -2;
 	}
 
@@ -96,6 +96,19 @@ int open_clientfd(char *hostname, int port) {
 	}
 
 	return clientfd;
+}
+
+int Open_clientfd(char *hostname, int port) {
+	int rc;
+	if ((rc = open_clientfd(hostname, port)) < 0) {
+		if (rc == -1) {
+			unix_error("Open_clientfd Unix error");
+		} else {
+			dns_error("Open_clientfd DNS error");
+		}
+	}
+
+	return rc;
 }
 
 /**
@@ -132,22 +145,6 @@ int open_listenfd(int port) {
 	}
 
 	return listenfd;
-}
-
-/**
- *
- */
-int Open_listenfd(char *hostname, int port) {
-	int rc;
-	if ((rc = open_clientfd(hostname, port)) < 0) {
-		if (rc == -1) {
-			unix_error("Open_clientfd Unix error");
-		} else {
-			dns_error("Open_clientfd DNS error");
-		}
-	}
-
-	return rc;
 }
 
 int Open_listenfd(int port) {

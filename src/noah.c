@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
 	port = atoi(argv[1]); //把字符串转换成整数
 
-	listenfd = Open_listenfd(port);
+	listenfd = open_listenfd(port);
 
 	while (1) {
 		clientlen = sizeof(clientadd);

@@ -37,8 +37,7 @@ ssize_t Writeline(int fc, const void *vptr, size_t maxlen);
 int open_clientfd(char *hostname, int portno);
 int Open_clientfd(char *hostname, int port);
 
-int Open_listenfd(char *hostname, int port);
-int open_listenfd(int portno);
+int open_listenfd(int port);
 int Open_listenfd(int port);
 
 /*接收客户端发来的请求*/
