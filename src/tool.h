@@ -48,7 +48,7 @@ typedef struct{
 } rio_t;
 
 void unix_error(char *msg);
-void dns_error(char *msg)
+void dns_error(char *msg);
 
 ssize_t Readline(int fd, void *vptr, size_t maxlen);
 ssize_t Writeline(int fc, const void *vptr, size_t maxlen);
