@@ -27,6 +27,8 @@
 #include <semaphore.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 /*一些恒定的参数*/
 #define	MAXLINE	 8192  /* max text line length */
