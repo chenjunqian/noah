@@ -13,6 +13,8 @@
 #include <netdb.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <sys/wait.h>
 
 /*一些恒定的参数*/
 #define	MAXLINE	 8192  /* max text line length */
