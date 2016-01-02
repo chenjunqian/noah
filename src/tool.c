@@ -15,6 +15,12 @@ void unix_error(char *msg) {
 	exit(0);
 }
 
+/* dns-style error */
+void dns_error(char *msg) {
+	fprintf(stderr, "%s: DNS error %d\n", msg, h_errno);
+	exit(0);
+}
+
 /*  Read a line from a socket  */
 ssize_t Readline(int sockd, void *vptr, size_t maxlen) {
 	ssize_t n, rc;
