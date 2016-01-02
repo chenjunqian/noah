@@ -7,8 +7,6 @@
 
 #include "tool.h"
 
-#define LISTENQ  1024  /* second argument to listen() */
-
 /* unix-style error */
 void unix_error(char *msg) {
 	fprintf(stderr, "%s: %s\n", msg, strerror(errno));
@@ -86,15 +84,15 @@ int open_clientfd(char *hostname, int port) {
 		return -1;
 	}
 
-	if ((hp = gethostname(hostname, sizeof(hostname))) == NULL) {
-		return -2;
-	}
+    if ((hp = gethostbyname(hostname)) == NULL){
+    	return -2;
+    }
 
 	bzero((char *) &serveraddr, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
 
-	bcopy((char *) hp->h_addr_list[0], (char *) serveraddr.sin_addr.s_addr,
-			hp->h_length);
+    bcopy((char *)hp->h_addr_list[0],
+	  (char *)&serveraddr.sin_addr.s_addr, hp->h_length);
 	serveraddr.sin_port = htonl(port);
 
 	if (connect(clientfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr))
@@ -131,10 +129,10 @@ int open_listenfd(int port) {
 	}
 
 	//检测端口是否被占用
-	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *) optval,
-			sizeof(int)) < 0) {
-		return -1;
-	}
+    if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR,
+		   (const void *)&optval , sizeof(int)) < 0){
+    	return -1;
+    }
 
 	//listenfd将与端口绑定起来
 	bzero((char *) &serveraddr, sizeof(serveraddr));
