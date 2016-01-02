@@ -62,7 +62,7 @@ void dealRequest(int fd) {
 	char filename[MAXLINE], cgiargs[MAXLINE];
 	rio_t rio;
 
-	Rio_readinitb(&rio, fd);
+	rio_readinitb(&rio, fd);
 	Rio_readlineb(&rio, buf, MAXLINE);
 	scanf(buf, "%s %s %s", method, uri, version);
 	if (strcasecmp(method, "GET")) {
