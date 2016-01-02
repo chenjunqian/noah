@@ -60,10 +60,11 @@ int Accept(int s, struct sockaddr *addr, socklen_t *addrlen);
 /*Unix I/O*/
 void rio_readinitb(rio_t *rp, int fd);
 ssize_t Rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen);
-int Open(const char *pathname, int flags, mode_t mode);
 ssize_t rio_writen(int fd, void *usrbuf, size_t n);
 void Rio_writen(int fd, void *usrbuf, size_t n);
+
 void Close(int fd);
+int Open(const char *pathname, int flags, mode_t mode);
 
 /*Unix memory*/
 void *Mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset);
