@@ -9,8 +9,13 @@
 
 #define LISTENQ  1024  /* second argument to listen() */
 
-/*  Read a line from a socket  */
+/* unix-style error */
+void unix_error(char *msg) {
+	fprintf(stderr, "%s: %s\n", msg, strerror(errno));
+	exit(0);
+}
 
+/*  Read a line from a socket  */
 ssize_t Readline(int sockd, void *vptr, size_t maxlen) {
 	ssize_t n, rc;
 	char c, *buffer;
@@ -75,7 +80,7 @@ int open_clientfd(char *hostname, int port) {
 		return -1;
 	}
 
-	if ((hp = gethostname(hostname,sizeof(hostname))) == NULL) {
+	if ((hp = gethostname(hostname, sizeof(hostname))) == NULL) {
 		return -2;
 	}
 
@@ -131,8 +136,7 @@ int open_listenfd(int port) {
 	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serveraddr.sin_port = htons((unsigned short )port);
 
-	if (bind(listenfd, (SA*)&serveraddr, sizeof(serveraddr))
-			< 0) {
+	if (bind(listenfd, (SA*) &serveraddr, sizeof(serveraddr)) < 0) {
 		return -1;
 	}
 

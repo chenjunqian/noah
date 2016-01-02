@@ -47,6 +47,8 @@ typedef struct{
 	int rio_buf[RIO_BUFSIZE];//内部缓冲区
 } rio_t;
 
+void unix_error(char *msg);
+
 ssize_t Readline(int fd, void *vptr, size_t maxlen);
 ssize_t Writeline(int fc, const void *vptr, size_t maxlen);
 
