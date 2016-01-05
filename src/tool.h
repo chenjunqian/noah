@@ -50,9 +50,6 @@ typedef struct {
 void unix_error(char *msg);
 void dns_error(char *msg);
 
-ssize_t Readline(int fd, void *vptr, size_t maxlen);
-ssize_t Writeline(int fc, const void *vptr, size_t maxlen);
-
 int open_clientfd(char *hostname, int portno);
 int Open_clientfd(char *hostname, int port);
 

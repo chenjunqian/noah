@@ -19,59 +19,6 @@ void dns_error(char *msg) {
 	exit(0);
 }
 
-/*  Read a line from a socket  */
-ssize_t Readline(int sockd, void *vptr, size_t maxlen) {
-	ssize_t n, rc;
-	char c, *buffer;
-
-	buffer = vptr;
-
-	for (n = 1; n < maxlen; n++) {
-
-		if ((rc = read(sockd, &c, 1)) == 1) {
-			*buffer++ = c;
-			if (c == '\n')
-				break;
-		} else if (rc == 0) {
-			if (n == 1)
-				return 0;
-			else
-				break;
-		} else {
-			if ( errno == EINTR)
-				continue;
-			return -1;
-		}
-	}
-
-	*buffer = 0;
-	return n;
-}
-
-/*  Write a line to a socket  */
-
-ssize_t Writeline(int sockd, const void *vptr, size_t n) {
-	size_t nleft;
-	ssize_t nwritten;
-	const char *buffer;
-
-	buffer = vptr;
-	nleft = n;
-
-	while (nleft > 0) {
-		if ((nwritten = write(sockd, buffer, nleft)) <= 0) {
-			if ( errno == EINTR)
-				nwritten = 0;
-			else
-				return -1;
-		}
-		nleft -= nwritten;
-		buffer += nwritten;
-	}
-
-	return n;
-}
-
 /**
  * 由hostname和port创建连接
  */
@@ -80,39 +27,33 @@ int open_clientfd(char *hostname, int port) {
 	struct hostent *hp;
 	struct sockaddr_in serveraddr;
 
-	if ((clientfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		return -1;
-	}
+	if ((clientfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		return -1; /* check errno for cause of error */
 
-    if ((hp = gethostbyname(hostname)) == NULL){
-    	return -2;
-    }
-
+	/* Fill in the server's IP address and port */
+	if ((hp = gethostbyname(hostname)) == NULL)
+		return -2; /* check h_errno for cause of error */
 	bzero((char *) &serveraddr, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
+	bcopy((char *) hp->h_addr_list[0], (char *) &serveraddr.sin_addr.s_addr,
+			hp->h_length);
+	serveraddr.sin_port = htons(port);
 
-    bcopy((char *)hp->h_addr_list[0],
-	  (char *)&serveraddr.sin_addr.s_addr, hp->h_length);
-	serveraddr.sin_port = htonl(port);
-
-	if (connect(clientfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr))
-			< 0) {
+	/* Establish a connection with the server */
+	if (connect(clientfd, (SA *) &serveraddr, sizeof(serveraddr)) < 0)
 		return -1;
-	}
-
 	return clientfd;
 }
 
 int Open_clientfd(char *hostname, int port) {
 	int rc;
-	if ((rc = open_clientfd(hostname, port)) < 0) {
-		if (rc == -1) {
-			unix_error("Open_clientfd Unix error");
-		} else {
-			dns_error("Open_clientfd DNS error");
-		}
-	}
 
+	if ((rc = open_clientfd(hostname, port)) < 0) {
+		if (rc == -1)
+			unix_error("Open_clientfd Unix error");
+		else
+			dns_error("Open_clientfd DNS error");
+	}
 	return rc;
 }
 
@@ -123,31 +64,27 @@ int open_listenfd(int port) {
 	int listenfd, optval = 1;
 	struct sockaddr_in serveraddr;
 
-	//创建一个socket文件描述符
-	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	/* Create a socket descriptor */
+	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return -1;
-	}
 
-	//检测端口是否被占用
-    if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR,
-		   (const void *)&optval , sizeof(int)) < 0){
-    	return -1;
-    }
+	/* Eliminates "Address already in use" error from bind. */
+	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *) &optval,
+			sizeof(int)) < 0)
+		return -1;
 
-	//listenfd将与端口绑定起来
+	/* Listenfd will be an endpoint for all requests to port
+	 on any IP address for this host */
 	bzero((char *) &serveraddr, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
 	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serveraddr.sin_port = htons((unsigned short )port);
-
-	if (bind(listenfd, (SA*) &serveraddr, sizeof(serveraddr)) < 0) {
+	if (bind(listenfd, (SA *) &serveraddr, sizeof(serveraddr)) < 0)
 		return -1;
-	}
 
-	if (listen(listenfd, LISTENQ) < 0) {
+	/* Make it a listening socket ready to accept connection requests */
+	if (listen(listenfd, LISTENQ) < 0)
 		return -1;
-	}
-
 	return listenfd;
 }
 
@@ -181,7 +118,7 @@ int Accept(int s, struct sockaddr *addr, socklen_t *addrlen) {
 static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n) {
 	int cnt;
 
-	while (rp->rio_cnt <= 0) { /*如果为空，就填满*/
+	while (rp->rio_cnt <= 0) { /* refill if buf is empty */
 		rp->rio_cnt = read(rp->rio_fd, rp->rio_buf, sizeof(rp->rio_buf));
 		if (rp->rio_cnt < 0) {
 			if (errno != EINTR) /* interrupted by sig handler return */
@@ -192,7 +129,7 @@ static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n) {
 			rp->rio_bufptr = rp->rio_buf; /* reset buffer ptr */
 	}
 
-	/*缓冲区为非空，将n和rp->cnt拷贝到用户缓冲区*/
+	/* Copy min(n, rp->rio_cnt) bytes from internal buf to user buf */
 	cnt = n;
 	if (rp->rio_cnt < n)
 		cnt = rp->rio_cnt;
@@ -212,20 +149,16 @@ ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen) {
 	for (n = 1; n < maxlen; n++) {
 		if ((rc = rio_read(rp, &c, 1)) == 1) {
 			*bufp++ = c;
-			if (c == '\n') {
+			if (c == '\n')
 				break;
-			}
 		} else if (rc == 0) {
-			if (n == 1) {
-				return 0; //EOF，没有读取任何数据
-			} else {
-				break; //EOF,读取了一些数据了
-			}
-		} else {
-			return -1; //error
-		}
+			if (n == 1)
+				return 0; /* EOF, no data read */
+			else
+				break; /* EOF, some data was read */
+		} else
+			return -1; /* error */
 	}
-
 	*bufp = 0;
 	return n;
 }
