@@ -49,7 +49,7 @@ void doit(int fd) {
 	rio_readinitb(&rio, fd);
 	Rio_readlineb(&rio, buf, MAXLINE);
 	sscanf(buf, "%s %s %s", method, uri, version);       //
-	if (!strcasecmp(method, "GET")) {                     //
+	if (strcasecmp(method, "GET")) {                     //
 		clienterror(fd, method, "501", "Not Implemented",
 				"Noah does not implement this method");
 		return;
