@@ -46,7 +46,7 @@ void doit(int fd) {
 	char filename[MAXLINE], cgiargs[MAXLINE];
 	rio_t rio;
 
-	rio_readinitb(&rio, fd);
+	Rio_readinitb(&rio, fd);
 	Rio_readlineb(&rio, buf, MAXLINE);
 	sscanf(buf, "%s %s %s", method, uri, version);       //
 	if (strcasecmp(method, "GET")) {                     //
@@ -148,12 +148,10 @@ void get_filetype(char *filename, char *filetype) {
 	else
 		strcpy(filetype, "text/plain");
 }
-/* $end serve_static */
 
 /*
  * serve_dynamic - run a CGI program on behalf of the client
  */
-/* $begin serve_dynamic */
 void serve_dynamic(int fd, char *filename, char *cgiargs) {
 	char buf[MAXLINE], *emptylist[] = { NULL };
 
@@ -171,12 +169,10 @@ void serve_dynamic(int fd, char *filename, char *cgiargs) {
 	}
 	Wait(NULL); /* Parent waits for and reaps child */ //
 }
-/* $end serve_dynamic */
 
 /*
  * clienterror - returns an error message to the client
  */
-/* $begin clienterror */
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg,
 		char *longmsg) {
 	char buf[MAXLINE], body[MAXBUF];

@@ -172,6 +172,10 @@ void rio_readinitb(rio_t *rp, int fd) {
 	rp->rio_bufptr = rp->rio_buf;
 }
 
+void Rio_readinitb(rio_t *rp, int fd) {
+	rio_readinitb(rp, fd);
+}
+
 /**
  * 对rio_readlineb的封装，增添错误提示符
  */

@@ -33,7 +33,7 @@
 /*一些恒定的参数*/
 #define	MAXLINE	 8192  /* max text line length */
 #define MAXBUF   8192  /* max I/O buffer size */
-#define LISTENQ        (1024)   /*  Backlog for listen()   */
+#define LISTENQ  1024  /*  Backlog for listen()   */
 #define RIO_BUFSIZE 8192
 
 extern char **environ; /* defined by libc */
@@ -43,8 +43,8 @@ typedef struct sockaddr SA;
 typedef struct {
 	int rio_fd; //缓冲区的描述符
 	int rio_cnt; //未读字节的缓冲区
-	int *rio_bufptr;
-	int rio_buf[RIO_BUFSIZE]; //内部缓冲区
+	char *rio_bufptr;
+	char rio_buf[RIO_BUFSIZE]; //内部缓冲区
 } rio_t;
 
 void unix_error(char *msg);
@@ -64,6 +64,7 @@ void rio_readinitb(rio_t *rp, int fd);
 ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen);
 ssize_t Rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen);
 
+void Rio_readinitb(rio_t *rp, int fd);
 ssize_t rio_writen(int fd, void *usrbuf, size_t n);
 void Rio_writen(int fd, void *usrbuf, size_t n);
 
